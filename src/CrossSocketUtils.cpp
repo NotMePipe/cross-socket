@@ -12,7 +12,7 @@ namespace CrossSocket
 	bool CS_Utils::Initialize()
 	{
 		initialized = false;
-#ifdef _WIN32
+#ifdef _WIN32 // If using Windows, initialize Winsock
 		if (!initialized)
 		{
 			WSADATA wsaData;
@@ -22,7 +22,7 @@ namespace CrossSocket
 			}
 			initialized = true;
 		}
-#else
+#else // Unix does not use Winsock2 and does not require initialization, so tell CrossSocket that everything is ready
 		initialized = true;
 #endif
 		return initialized;
@@ -33,9 +33,9 @@ namespace CrossSocket
 	*/
 	void CS_Utils::Cleanup()
 	{
-#ifdef _WIN32
+#ifdef _WIN32 // If using Windows, cleanup Winsock
 		WSACleanup();
 #endif
-		initialized = false;
+		initialized = false; // Tell CrossSocket not to start any new operations
 	}
 }

@@ -4,9 +4,14 @@ namespace CrossSocket
 {
 	bool CS_Utils::initialized = false;
 
+	/**
+	* @brief Initialize CrossSocket
+	* 
+	* @return True if CrossSocket is initialized. False if CrossSocket is not initialized
+	*/
 	bool CS_Utils::Initialize()
 	{
-		bool initialized = false;
+		initialized = false;
 #ifdef _WIN32
 		if (!initialized)
 		{
@@ -23,10 +28,14 @@ namespace CrossSocket
 		return initialized;
 	}
 
+	/**
+	* @brief Shut down CrossSocket
+	*/
 	void CS_Utils::Cleanup()
 	{
 #ifdef _WIN32
 		WSACleanup();
 #endif
+		initialized = false;
 	}
 }

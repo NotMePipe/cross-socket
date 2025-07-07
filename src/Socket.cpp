@@ -7,16 +7,16 @@ namespace CrossSocket
 	*/
 	Socket::Socket()
 	{
-		if (CS_Utils::Initialize())
+		if (CS_Utils::Initialize()) // If CrossSocket has not been initialized, attempt to initialize it
 		{
 			mSocket = socket(AF_INET, SOCK_STREAM, 0); // Create an IPv4 TCP socket
-			if (mSocket == INVALID_SOCKET)
+			if (mSocket == INVALID_SOCKET) // If there is an socket creation error, shut down CrossSocket and error
 			{
 				CS_Utils::Cleanup();
 				throw std::runtime_error("Socket creation failed");
 			}
 		}
-		else
+		else // If there was an initialization failure, error
 		{
 			std::cerr << "Winsock not initialized" << std::endl; // Specifying Winsock because the CrossSocket does not require initialization on Unix machines
 			mSocket = NULL;
@@ -31,11 +31,11 @@ namespace CrossSocket
 	*/
 	Socket::Socket(socket_t existingSocket)
 	{
-		if (CS_Utils::Initialize())
+		if (CS_Utils::Initialize()) // If CrossSocket has not been initialized, attempt to initialize it
 		{
 			mSocket = existingSocket;
 		}
-		else
+		else // If there was an initialization failure, error
 		{
 			std::cerr << "Winsock not initialized" << std::endl; // Specifying Winsock because the CrossSocket does not require initialization on Unix machines
 			mSocket = NULL;
@@ -97,13 +97,13 @@ namespace CrossSocket
 	*/
 	void Socket::SetNonblockingMode(bool enable)
 	{
-#ifdef _WIN32
+#ifdef _WIN32 // Windows functionality
 		u_long mode = enable ? 1 : 0;
 		if (ioctlsocket(mSocket, FIONBIO, &mode) != 0)
 		{
 			Error("Failed to set non-blocking mode");
 		}
-#else
+#else // Unix functionality
 		int flags = fcntl(mSocket, F_GETFL, 0);
 		if (flags == -1)
 		{
@@ -139,14 +139,15 @@ namespace CrossSocket
 		server.sin_family = family;
 		server.sin_port = htons(port);
 
-		if (inet_pton(family, address, &server.sin_addr) <= 0)
+		if (inet_pton(family, address, &server.sin_addr) <= 0) // If the parameters do not match up to a valid address
 		{
 			throw std::runtime_error("Invalid address");
 		}
 
-		if (connect(mSocket, (sockaddr*)&server, sizeof(server)) == SOCKET_ERROR)
+		if (connect(mSocket, (sockaddr*)&server, sizeof(server)) == SOCKET_ERROR) // If there is an error connecting to the server
 		{
 			int error = errno;
+			// If the error code matches any of these three errors, we can ignore the error and continue the program as normal
 			if (error != EWOULDBLOCK && error != EINPROGRESS && error != EALREADY)
 			{
 				// If the connection refuses, the server is likely offline. Rather than erroring, just continue the program as normal
@@ -156,7 +157,7 @@ namespace CrossSocket
 				{
 					std::cout << "Connection refused. Retrying..." << std::endl;
 				}
-				else
+				else // If the error is not ignored, error
 				{
 					Error("Connection failed with error " + std::to_string(error));
 				}
@@ -176,7 +177,7 @@ namespace CrossSocket
 		addr.sin_addr.s_addr = INADDR_ANY;
 		addr.sin_port = htons(port);
 
-		if (bind(mSocket, (sockaddr*)&addr, sizeof(addr)) == SOCKET_ERROR)
+		if (bind(mSocket, (sockaddr*)&addr, sizeof(addr)) == SOCKET_ERROR) // If there was a failure binding, error
 		{
 			Error("Bind failed");
 		}
@@ -189,7 +190,7 @@ namespace CrossSocket
 	*/
 	void Socket::Listen(int backlog)
 	{
-		if (listen(mSocket, backlog) == SOCKET_ERROR)
+		if (listen(mSocket, backlog) == SOCKET_ERROR) // If there was a failure listening, error
 		{
 			Error("Listen failed");
 		}
@@ -203,10 +204,10 @@ namespace CrossSocket
 	Socket Socket::AcceptConnection()
 	{
 		socket_t client = accept(mSocket, nullptr, nullptr); // Attempt to accept a socket from any address
-		if (client == INVALID_SOCKET)
+		if (client == INVALID_SOCKET) // If there is an error while accepting...
 		{
 			int error = errno;
-			if (error != EWOULDBLOCK)
+			if (error != EWOULDBLOCK) // ...and the error code is not ignorable, error
 			{
 				Error("Accept failed");
 			}
@@ -272,7 +273,7 @@ namespace CrossSocket
 	void Socket::Send(const char* buf, int len, int flags)
 	{
 		int total_sent = 0;
-		while (total_sent < len)
+		while (total_sent < len) // TCP doesn't always send all the data at once, so continue trying to send data until it is all sent
 		{
 			int sent = send(mSocket, buf + total_sent, len - total_sent, flags);
 			if (sent == SOCKET_ERROR)
@@ -300,39 +301,40 @@ namespace CrossSocket
 		}
 	}
 
-	/**
-	* @brief Receive data through a TCP connection
-	*
-	* @param buf Destination to store data
-	* @param len Size (in bytes) of the data received
-	* @param flags Receiving flags
-	* @return Data size in bytes
-	*/
+		/**
+		* @brief Receive data through a TCP connection
+		*
+		* @param buf Destination to store data
+		* @param len Size (in bytes) of the data received
+		* @param flags Receiving flags
+		* @return Data size in bytes
+		*/
 	int Socket::Receive(char* buf, int len, int flags)
 	{
 		int bytesReceived = 0;
-		while (bytesReceived < len)
+		while (bytesReceived < len) // TCP doesn't always receive all the data at once, so continue trying to receive data until it all arrives
 		{
 			int received = recv(mSocket, buf + bytesReceived, len - bytesReceived, flags);
-			if (received == 0)
+			if (received == 0) // If nothing is received, but there is no error
 			{
+				// Connection closed
 				return bytesReceived;
 			}
-			else if (received == SOCKET_ERROR)
+			else if (received == SOCKET_ERROR) // If there is an error while receiving...
 			{
 				int error = errno;
-				if (error != EWOULDBLOCK && error != EINPROGRESS && error != EALREADY)
+				if (error != EWOULDBLOCK && error != EINPROGRESS && error != EALREADY) // ...and the error cannot be ignored
 				{
-					if (error == ECONNRESET)
+					if (error == ECONNRESET) // This error usually doesn't result in a problem, but there will not be any more data, so stop receiving
 					{
 						std::cerr << "Connection reset" << std::endl;
 					}
-					else
+					else // Otherwise, error
 					{
 						Error("Recv failed with error " + std::to_string(error));
 					}
 				}
-				return bytesReceived;
+				return bytesReceived; // Stop receiving data regardless of the error
 			}
 			bytesReceived += received;
 		}

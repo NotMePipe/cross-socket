@@ -18,6 +18,8 @@ using socket_t = SOCKET;
 #define EALREADY WSAEALREADY
 #undef ECONNRESET
 #define ECONNRESET WSAECONNRESET
+#undef ECONNREFUSED
+#define ECONNREFUSED WSAECONNREFUSED
 
 #undef errno
 #define errno WSAGetLastError()
@@ -30,30 +32,46 @@ using socket_t = SOCKET;
 #include <netdb.h>
 
 using socket_t = int;
+
 #define INVALID_SOCKET (-1)
 #define SOCKET_ERROR (-1)
 #endif
 
 namespace CrossSocket
 {
-	inline void close_socket(socket_t socket)
-	{
-#ifdef _WIN32
-		closesocket(socket);
-#else
-		close(socket);
-#endif
-	}
-
 	class CS_Utils
 	{
 	private:
 		static bool initialized;
 
-	public:
+		/**
+		* @brief Initialize CrossSocket
+		*
+		* @return True if CrossSocket is initialized. False if CrossSocket is not initialized
+		*/
 		static bool Initialize();
 
+		/**
+		* @brief Shut down CrossSocket
+		*/
 		static void Cleanup();
+
+		/**
+		* @brief Platform-neutral function to close a socket
+		*
+		* @param socket Socket to close
+		*/
+		static inline void close_socket(socket_t socket)
+		{
+#ifdef _WIN32
+			closesocket(socket);
+#else
+			close(socket);
+#endif
+		}
+
+		friend class Socket;
+		friend class SocketManager;
 	};
 }
 

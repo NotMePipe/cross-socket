@@ -49,3 +49,28 @@
 - Because the `EWOULDBLOCK`, `EINPROGRESS`, `EALREADY`, `ECONNRESET`, and `errno` macros have all been redefined on Windows, any references to them in files including CrossSocket will likely function incorrectly (1.0W7)
 <a id="1.0W8"></a>
 - `SocketManager.cpp` occasionally outputs build warnings about local variables and data type conversion. Functionality isn't impacted by this (1.0W8)
+
+## Version 1.1
+- Renamed `CrossSocket.h` to `Socket.h`
+- Sockets are now shut down before they are closed
+- Added Doxygen comments
+- [(1.0W8)](#1.0W8) has been resolved.
+### CrossSocketUtils.h
+- Added `ECONNREFUSED` macro
+- `close_socket()` has been moved into the `CS_Utils` class for call safety
+- All `CS_Utils` contents have been made private for call safety
+  - CrossSocket files have been marked as friends to this class
+### Socket.h
+- Renamed `CloseSocket()` to `Close()`
+- Added `Shutdown()` for manual shutdown calls
+- `Close()` now checks if the `socket_t` is valid before trying to close it
+### SocketManager.h
+- Improved memory practices
+- Added `CloseSockets()` to close all Sockets handle by the SocketManager
+- Users should no longer close Sockets twice when using the SocketManager
+  - CrossSocket now intelligently handles this. Closing a Socket twice will not cause any errors, but it is unnecessary and a bad practice
+### *Warnings*
+<a id="1.1W1"></a>
+- `ECONNREFUSED` macro is not recommended to be used. It is currently implemented in `ConnectTo()` in `Socket.h` as a temporary method of allowing CrossSocket to retry when connections fail rather than crashing. It isn't dangerous to use, but it is an error that shouldn't always be ignored like it currently is (1.1W1)
+<a id="1.1W2"></a>
+- Even though `CrossSocketUtils.h` has the platform-neutral functions hidden to only CrossSocket, the library still will give files including it access to socket functions through the Berkeley Socket API or WinSock. As a result of this, it is possible to make calls directly using the socket accessed by `GetRawSocket()`. This is not an intended function of CrossSocket, and is not recommended. If a socket is closed in that manner, CrossSocket could begin to error or have undefined behavior (1.1W2)

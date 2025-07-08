@@ -6,9 +6,7 @@
 #include <WinSock2.h>
 #include <ws2tcpip.h>
 
-#pragma comment(lib, "ws2_32.lib") // Link Winsock to the compiler
-
-using socket_t = SOCKET; // socket_t type definition required for platform-neutrality
+using socket_t = SOCKET;
 
 // Remove Windows errno.h definitions for error codes present in Unix errno.h and reassigned them to Winsock error codes
 #undef EWOULDBLOCK
@@ -50,22 +48,22 @@ namespace CrossSocket
 		static bool initialized;
 
 		/**
-		* @brief Initialize CrossSocket
-		*
-		* @return True if CrossSocket is initialized. False if CrossSocket is not initialized
-		*/
+		 * @brief Initialize CrossSocket
+		 *
+		 * @return True if CrossSocket is initialized. False if CrossSocket is not initialized
+		 */
 		static bool Initialize();
 
 		/**
-		* @brief Shut down CrossSocket
-		*/
+		 * @brief Shut down CrossSocket
+		 */
 		static void Cleanup();
 
 		/**
-		* @brief Platform-neutral function to close a socket
-		*
-		* @param socket Socket to close
-		*/
+		 * @brief Platform-neutral function to close a socket
+		 *
+		 * @param socket Socket to close
+		 */
 		static inline void close_socket(socket_t socket)
 		{
 #ifdef _WIN32

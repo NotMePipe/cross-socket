@@ -16,7 +16,7 @@ namespace CrossSocket
 		else
 		{
 			std::cerr << "Winsock2 not initialized" << std::endl;
-			mSocket = NULL;
+			mSocket = 0;
 			throw std::runtime_error("Winsock2 not initialized");
 		}
 	}
@@ -30,7 +30,7 @@ namespace CrossSocket
 		else
 		{
 			std::cerr << "Winsock2 not initialized" << std::endl;
-			mSocket = NULL;
+			mSocket = 0;
 			throw std::runtime_error("Winsock2 not initialized");
 		}
 	}
@@ -88,7 +88,7 @@ namespace CrossSocket
 #endif
 	}
 
-	void Socket::ConnectTo(short family, const char* address, u_short port)
+	void Socket::ConnectTo(short family, const char *address, u_short port)
 	{
 		sockaddr_in server{};
 		server.sin_family = family;
@@ -99,7 +99,7 @@ namespace CrossSocket
 			throw std::runtime_error("Invalid address");
 		}
 
-		if (connect(mSocket, (sockaddr*)&server, sizeof(server)) == SOCKET_ERROR)
+		if (connect(mSocket, (sockaddr *)&server, sizeof(server)) == SOCKET_ERROR)
 		{
 			int error = errno;
 			if (error != EWOULDBLOCK && error != EINPROGRESS && error != EALREADY)
@@ -116,7 +116,7 @@ namespace CrossSocket
 		addr.sin_addr.s_addr = INADDR_ANY;
 		addr.sin_port = htons(port);
 
-		if (bind(mSocket, (sockaddr*)&addr, sizeof(addr)) == SOCKET_ERROR)
+		if (bind(mSocket, (sockaddr *)&addr, sizeof(addr)) == SOCKET_ERROR)
 		{
 			Error("Bind failed");
 		}
@@ -180,7 +180,7 @@ namespace CrossSocket
 		return FD_ISSET(mSocket, &writeSet);
 	}
 
-	void Socket::Send(const char* buf, int len, int flags) const
+	void Socket::Send(const char *buf, int len, int flags) const
 	{
 		int total_sent = 0;
 		while (total_sent < len)
@@ -194,7 +194,7 @@ namespace CrossSocket
 		}
 	}
 
-	void Socket::Send(const char* buf, int len, int flags, const sockaddr* to, int tolen) const
+	void Socket::Send(const char *buf, int len, int flags, const sockaddr *to, int tolen) const
 	{
 		if (sendto(mSocket, buf, len, flags, to, tolen) == SOCKET_ERROR)
 		{
@@ -202,7 +202,7 @@ namespace CrossSocket
 		}
 	}
 
-	int Socket::Receive(char* buf, int len, int flags) const
+	int Socket::Receive(char *buf, int len, int flags) const
 	{
 		int bytesReceived = 0;
 		while (bytesReceived < len)
@@ -234,7 +234,7 @@ namespace CrossSocket
 		return bytesReceived;
 	}
 
-	int Socket::Receive(char* buf, int len, int flags, sockaddr* from, int* fromlen) const
+	int Socket::Receive(char *buf, int len, int flags, sockaddr *from, int *fromlen) const
 	{
 		int bytesReceived = recvfrom(mSocket, buf, len, flags, from, fromlen);
 		if (bytesReceived == SOCKET_ERROR)

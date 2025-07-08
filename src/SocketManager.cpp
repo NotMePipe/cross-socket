@@ -90,7 +90,7 @@ namespace CrossSocket
         int result = select(static_cast<int>(maxFd + 1), &readSet, &writeSet, nullptr, &timeout);
         if (result == SOCKET_ERROR)
         {
-            throw std::runtime_error("select() failed in event loop" + std::to_string(errno));
+            throw std::runtime_error("select() failed in event loop" + std::to_string(CSERROR));
         }
 
         for (WatchedSocket &ws : sockets) // Handle event callbacks

@@ -5,10 +5,10 @@ namespace CrossSocket
 	bool CS_Utils::initialized = false;
 
 	/**
-	* @brief Initialize CrossSocket
-	* 
-	* @return True if CrossSocket is initialized. False if CrossSocket is not initialized
-	*/
+	 * @brief Initialize CrossSocket
+	 *
+	 * @return True if CrossSocket is initialized. False if CrossSocket is not initialized
+	 */
 	bool CS_Utils::Initialize()
 	{
 		initialized = false;
@@ -29,8 +29,8 @@ namespace CrossSocket
 	}
 
 	/**
-	* @brief Shut down CrossSocket
-	*/
+	 * @brief Shut down CrossSocket
+	 */
 	void CS_Utils::Cleanup()
 	{
 #ifdef _WIN32 // If using Windows, cleanup Winsock

@@ -9,6 +9,8 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # Allow user to choose shared or static build (default: shared)
 option(BUILD_SHARED_LIBS "Build shared libraries instead of static ones" ON)
 
+set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
+
 set(SOURCES
     src/Socket.cpp
     src/CrossSocketUtils.cpp

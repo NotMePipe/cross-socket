@@ -6,7 +6,7 @@
 #include <WinSock2.h>
 #include <ws2tcpip.h>
 
-#pragma comment(lib, "Ws2_32.lib")
+#pragma comment(lib, "Ws2_32.lib") // Link Winsock to the compiler
 
 using socket_t = SOCKET;
 

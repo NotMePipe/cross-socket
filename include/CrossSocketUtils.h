@@ -6,6 +6,8 @@
 #include <WinSock2.h>
 #include <ws2tcpip.h>
 
+#pragma comment(lib, "Ws2_32.lib")
+
 using socket_t = SOCKET;
 
 // Remove Windows errno.h definitions for error codes present in Unix errno.h and reassigned them to Winsock error codes

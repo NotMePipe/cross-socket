@@ -146,14 +146,14 @@ namespace CrossSocket
 
 		if (connect(mSocket, (sockaddr *)&server, sizeof(server)) == SOCKET_ERROR) // If there is an error connecting to the server
 		{
-			int error = errno;
+			int error = CSERROR;
 			// If the error code matches any of these three errors, we can ignore the error and continue the program as normal
-			if (error != EWOULDBLOCK && error != EINPROGRESS && error != EALREADY)
+			if (error != CSEWOULDBLOCK && error != CSEINPROGRESS && error != CSEALREADY)
 			{
 				// If the connection refuses, the server is likely offline. Rather than erroring, just continue the program as normal
 				// NOTE: In this applicaiton, continuing as normal means trying to connect again
 				// This is technically a risky/bad practice, so it has its own if block for easy removability
-				if (error == ECONNREFUSED)
+				if (error == CSECONNREFUSED)
 				{
 					std::cout << "Connection refused. Retrying..." << std::endl;
 				}
@@ -206,8 +206,8 @@ namespace CrossSocket
 		socket_t client = accept(mSocket, nullptr, nullptr); // Attempt to accept a socket from any address
 		if (client == INVALID_SOCKET)						 // If there is an error while accepting...
 		{
-			int error = errno;
-			if (error != EWOULDBLOCK) // ...and the error code is not ignorable, error
+			int error = CSERROR;
+			if (error != CSEWOULDBLOCK) // ...and the error code is not ignorable, error
 			{
 				Error("Accept failed");
 			}
@@ -278,7 +278,7 @@ namespace CrossSocket
 			int sent = send(mSocket, buf + total_sent, len - total_sent, flags);
 			if (sent == SOCKET_ERROR)
 			{
-				Error("Send failed with error " + std::to_string(errno));
+				Error("Send failed with error " + std::to_string(CSERROR));
 			}
 			total_sent += sent;
 		}
@@ -297,7 +297,7 @@ namespace CrossSocket
 	{
 		if (sendto(mSocket, buf, len, flags, to, tolen) == SOCKET_ERROR)
 		{
-			Error("SendTo failed with error " + std::to_string(errno));
+			Error("SendTo failed with error " + std::to_string(CSERROR));
 		}
 	}
 
@@ -322,10 +322,10 @@ namespace CrossSocket
 			}
 			else if (received == SOCKET_ERROR) // If there is an error while receiving...
 			{
-				int error = errno;
-				if (error != EWOULDBLOCK && error != EINPROGRESS && error != EALREADY) // ...and the error cannot be ignored
+				int error = CSERROR;
+				if (error != CSEWOULDBLOCK && error != CSEINPROGRESS && error != CSEALREADY) // ...and the error cannot be ignored
 				{
-					if (error == ECONNRESET) // This error usually doesn't result in a problem, but there will not be any more data, so stop receiving
+					if (error == CSECONNRESET) // This error usually doesn't result in a problem, but there will not be any more data, so stop receiving
 					{
 						std::cerr << "Connection reset" << std::endl;
 					}
@@ -356,7 +356,7 @@ namespace CrossSocket
 		int bytesReceived = recvfrom(mSocket, buf, len, flags, from, fromlen);
 		if (bytesReceived == SOCKET_ERROR)
 		{
-			Error("RecvFrom failed with error " + std::to_string(errno));
+			Error("RecvFrom failed with error " + std::to_string(CSERROR));
 		}
 		return bytesReceived;
 	}

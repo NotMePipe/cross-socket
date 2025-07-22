@@ -6,6 +6,8 @@
 #include <WinSock2.h>
 #include <ws2tcpip.h>
 
+#pragma comment(lib, "Ws2_32.lib") // Link Winsock to the compiler
+
 using socket_t = SOCKET;
 
 // Define platform-neutral error codes

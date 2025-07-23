@@ -1,7 +1,6 @@
 #ifndef __CROSS_SOCKET_UTILS_H
 #define __CROSS_SOCKET_UTILS_H
 
-#include <stdexcept>
 #ifdef _WIN32
 #include <WinSock2.h>
 #include <ws2tcpip.h>

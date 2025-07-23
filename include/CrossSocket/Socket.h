@@ -2,9 +2,6 @@
 #ifndef __SOCKET_H
 #define __SOCKET_H
 
-#include <iostream>
-#include <string>
-
 #include "CrossSocketUtils.h"
 
 namespace CrossSocket
@@ -18,8 +15,9 @@ namespace CrossSocket
 		 * @brief Send an error message, close the socket, shut down CrossSocket, and throw and exception
 		 *
 		 * @param message Error message
+		 * @param errorCode Error code
 		 */
-		void Error(std::string message);
+		void Error(const char *message, int errorCode);
 
 	public:
 		/**

@@ -1,5 +1,7 @@
 #include "CrossSocket/CrossSocketUtils.h"
 
+#include <stdexcept>
+
 namespace CrossSocket
 {
 	bool CS_Utils::initialized = false;

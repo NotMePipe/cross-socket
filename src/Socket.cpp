@@ -1,5 +1,8 @@
 #include "CrossSocket/Socket.h"
 
+#include <iostream>
+#include <string>
+
 namespace CrossSocket
 {
 	/**
@@ -55,13 +58,15 @@ namespace CrossSocket
 	 * @brief Send an error message, close the socket, shut down CrossSocket, and throw and exception
 	 *
 	 * @param message Error message
+	 * @param errorCode Error code
 	 */
-	void Socket::Error(std::string message)
+	void Socket::Error(const char *message, int errorCode)
 	{
-		std::cerr << message << std::endl;
+		std::string err = std::string(message) + " " + std::to_string(errorCode);
+		std::cerr << err << std::endl;
 		Close();
 		CS_Utils::Cleanup();
-		throw std::runtime_error(message);
+		throw std::runtime_error(err);
 	}
 
 	/**
@@ -101,13 +106,13 @@ namespace CrossSocket
 		u_long mode = enable ? 1 : 0;
 		if (ioctlsocket(mSocket, FIONBIO, &mode) != 0)
 		{
-			Error("Failed to set non-blocking mode");
+			Error("Failed to set non-blocking mode", CSERROR);
 		}
 #else
 		int flags = fcntl(mSocket, F_GETFL, 0);
 		if (flags == -1)
 		{
-			Error("fcntl(F_GETFL) failed");
+			Error("fcntl(F_GETFL) failed", CSERROR);
 		}
 
 		if (enable)
@@ -121,7 +126,7 @@ namespace CrossSocket
 
 		if (fcntl(mSocket, F_SETFL, flags) == -1)
 		{
-			Error("fcntl(F_SETFL) failed");
+			Error("fcntl(F_SETFL) failed", CSERROR);
 		}
 #endif // _WIN32
 	}
@@ -155,7 +160,7 @@ namespace CrossSocket
 				}
 				else
 				{
-					Error("Connection failed with error " + std::to_string(error));
+					Error("Connection failed with error", error);
 				}
 			}
 		}
@@ -175,7 +180,7 @@ namespace CrossSocket
 
 		if (bind(mSocket, (sockaddr *)&addr, sizeof(addr)) == SOCKET_ERROR)
 		{
-			Error("Bind failed");
+			Error("Bind failed", CSERROR);
 		}
 	}
 
@@ -188,7 +193,7 @@ namespace CrossSocket
 	{
 		if (listen(mSocket, backlog) == SOCKET_ERROR)
 		{
-			Error("Listen failed");
+			Error("Listen failed", CSERROR);
 		}
 	}
 
@@ -205,7 +210,7 @@ namespace CrossSocket
 			int error = CSERROR;
 			if (error != CSEWOULDBLOCK)
 			{
-				Error("Accept failed");
+				Error("Accept failed", error);
 			}
 		}
 		return Socket(client);
@@ -274,7 +279,7 @@ namespace CrossSocket
 			int sent = send(mSocket, buf + total_sent, len - total_sent, flags);
 			if (sent == SOCKET_ERROR)
 			{
-				Error("Send failed with error " + std::to_string(CSERROR));
+				Error("Send failed with error", CSERROR);
 			}
 			total_sent += sent;
 		}
@@ -293,7 +298,7 @@ namespace CrossSocket
 	{
 		if (sendto(mSocket, buf, len, flags, to, tolen) == SOCKET_ERROR)
 		{
-			Error("SendTo failed with error " + std::to_string(CSERROR));
+			Error("SendTo failed with error", CSERROR);
 		}
 	}
 
@@ -324,9 +329,9 @@ namespace CrossSocket
 					{
 						std::cerr << "Connection reset" << std::endl;
 					}
-					else // Otherwise, error
+					else
 					{
-						Error("Recv failed with error " + std::to_string(error));
+						Error("Recv failed with error", error);
 					}
 				}
 				return bytesReceived;
@@ -351,7 +356,7 @@ namespace CrossSocket
 		int bytesReceived = recvfrom(mSocket, buf, len, flags, from, fromlen);
 		if (bytesReceived == SOCKET_ERROR)
 		{
-			Error("RecvFrom failed with error " + std::to_string(CSERROR));
+			Error("RecvFrom failed with error", CSERROR);
 		}
 		return bytesReceived;
 	}

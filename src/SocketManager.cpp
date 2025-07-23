@@ -1,5 +1,7 @@
 #include "CrossSocket/SocketManager.h"
 
+#include <stdexcept>
+
 namespace CrossSocket
 {
     SocketManager *SocketManager::sInstance = nullptr;

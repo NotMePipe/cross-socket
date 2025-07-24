@@ -73,7 +73,20 @@ namespace CrossSocket
 		}
 
 	public:
+		/**
+		 * @brief Convert to network byte order (to big-endian)
+		 *
+		 * @param val Value to convert
+		 * @return Input value in big-endian
+		 */
 		static uint32_t cs_htonl(uint32_t val);
+
+		/**
+		 * @brief Convert from network byte order (to little-endian)
+		 *
+		 * @param val Value to convert
+		 * @return Input value in little-endian
+		 */
 		static uint32_t cs_ntohl(uint32_t val);
 
 		friend class Socket;

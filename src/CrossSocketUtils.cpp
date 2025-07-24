@@ -41,11 +41,23 @@ namespace CrossSocket
 		initialized = false;
 	}
 
+	/**
+	 * @brief Convert to network byte order (to big-endian)
+	 *
+	 * @param val Value to convert
+	 * @return Input value in big-endian
+	 */
 	uint32_t CS_Utils::cs_htonl(uint32_t val)
 	{
 		return htonl(val);
 	}
 
+	/**
+	 * @brief Convert from network byte order (to little-endian)
+	 *
+	 * @param val Value to convert
+	 * @return Input value in little-endian
+	 */
 	uint32_t CS_Utils::cs_ntohl(uint32_t val)
 	{
 		return ntohl(val);

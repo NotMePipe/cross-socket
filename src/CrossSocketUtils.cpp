@@ -40,4 +40,14 @@ namespace CrossSocket
 #endif // _WIN32
 		initialized = false;
 	}
+
+	uint32_t CS_Utils::cs_htonl(uint32_t val)
+	{
+		return htonl(val);
+	}
+
+	uint32_t CS_Utils::cs_ntohl(uint32_t val)
+	{
+		return ntohl(val);
+	}
 }

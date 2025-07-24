@@ -1,6 +1,8 @@
 #ifndef __CROSS_SOCKET_UTILS_H
 #define __CROSS_SOCKET_UTILS_H
 
+#include <cstdint>
+
 #ifdef _WIN32
 #include <WinSock2.h>
 #include <ws2tcpip.h>
@@ -69,6 +71,10 @@ namespace CrossSocket
 			close(socket);
 #endif
 		}
+
+	public:
+		static uint32_t cs_htonl(uint32_t val);
+		static uint32_t cs_ntohl(uint32_t val);
 
 		friend class Socket;
 		friend class SocketManager;

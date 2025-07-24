@@ -25,4 +25,4 @@ endif()
 
 target_include_directories(CrossSocket PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
-set_target_properties(CrossSocket PROPERTIES VERSION 1.2 SOVERSION 1)
+set_target_properties(CrossSocket PROPERTIES VERSION 2.0 SOVERSION 1)

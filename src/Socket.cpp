@@ -1,5 +1,8 @@
 #include "CrossSocket/Socket.h"
 
+#include <iostream>
+#include <string>
+
 namespace CrossSocket
 {
 	/**
@@ -9,16 +12,16 @@ namespace CrossSocket
 	{
 		if (CS_Utils::Initialize()) // If CrossSocket has not been initialized, attempt to initialize it
 		{
-			mSocket = socket(AF_INET, SOCK_STREAM, 0); // Create an IPv4 TCP socket
-			if (mSocket == INVALID_SOCKET)			   // If there is an socket creation error, shut down CrossSocket and error
+			mSocket = socket(AF_INET, SOCK_STREAM, 0);
+			if (mSocket == INVALID_SOCKET)
 			{
 				CS_Utils::Cleanup();
 				throw std::runtime_error("Socket creation failed");
 			}
 		}
-		else // If there was an initialization failure, error
+		else
 		{
-			std::cerr << "Winsock not initialized" << std::endl; // Specifying Winsock because the CrossSocket does not require initialization on Unix machines
+			std::cerr << "Winsock not initialized" << std::endl;
 			mSocket = 0;
 			throw std::runtime_error("Winsock not initialized");
 		}
@@ -55,13 +58,15 @@ namespace CrossSocket
 	 * @brief Send an error message, close the socket, shut down CrossSocket, and throw and exception
 	 *
 	 * @param message Error message
+	 * @param errorCode Error code
 	 */
-	void Socket::Error(std::string message)
+	void Socket::Error(const char *message, int errorCode)
 	{
-		std::cerr << message << std::endl;
+		std::string err = std::string(message) + " " + std::to_string(errorCode);
+		std::cerr << err << std::endl;
 		Close();
 		CS_Utils::Cleanup();
-		throw std::runtime_error(message);
+		throw std::runtime_error(err);
 	}
 
 	/**
@@ -97,17 +102,17 @@ namespace CrossSocket
 	 */
 	void Socket::SetNonblockingMode(bool enable)
 	{
-#ifdef _WIN32 // Windows functionality
+#ifdef _WIN32
 		u_long mode = enable ? 1 : 0;
 		if (ioctlsocket(mSocket, FIONBIO, &mode) != 0)
 		{
-			Error("Failed to set non-blocking mode");
+			Error("Failed to set non-blocking mode", CSERROR);
 		}
-#else // Unix functionality
+#else
 		int flags = fcntl(mSocket, F_GETFL, 0);
 		if (flags == -1)
 		{
-			Error("fcntl(F_GETFL) failed");
+			Error("fcntl(F_GETFL) failed", CSERROR);
 		}
 
 		if (enable)
@@ -121,9 +126,9 @@ namespace CrossSocket
 
 		if (fcntl(mSocket, F_SETFL, flags) == -1)
 		{
-			Error("fcntl(F_SETFL) failed");
+			Error("fcntl(F_SETFL) failed", CSERROR);
 		}
-#endif
+#endif // _WIN32
 	}
 
 	/**
@@ -139,27 +144,23 @@ namespace CrossSocket
 		server.sin_family = family;
 		server.sin_port = htons(port);
 
-		if (inet_pton(family, address, &server.sin_addr) <= 0) // If the parameters do not match up to a valid address
+		if (inet_pton(family, address, &server.sin_addr) <= 0)
 		{
 			throw std::runtime_error("Invalid address");
 		}
 
-		if (connect(mSocket, (sockaddr *)&server, sizeof(server)) == SOCKET_ERROR) // If there is an error connecting to the server
+		if (connect(mSocket, (sockaddr *)&server, sizeof(server)) == SOCKET_ERROR)
 		{
-			int error = errno;
-			// If the error code matches any of these three errors, we can ignore the error and continue the program as normal
-			if (error != EWOULDBLOCK && error != EINPROGRESS && error != EALREADY)
+			int error = CSERROR;
+			if (error != CSEWOULDBLOCK && error != CSEINPROGRESS && error != CSEALREADY)
 			{
-				// If the connection refuses, the server is likely offline. Rather than erroring, just continue the program as normal
-				// NOTE: In this applicaiton, continuing as normal means trying to connect again
-				// This is technically a risky/bad practice, so it has its own if block for easy removability
-				if (error == ECONNREFUSED)
+				if (error == CSECONNREFUSED)
 				{
 					std::cout << "Connection refused. Retrying..." << std::endl;
 				}
-				else // If the error is not ignored, error
+				else
 				{
-					Error("Connection failed with error " + std::to_string(error));
+					Error("Connection failed with error", error);
 				}
 			}
 		}
@@ -177,9 +178,9 @@ namespace CrossSocket
 		addr.sin_addr.s_addr = INADDR_ANY;
 		addr.sin_port = htons(port);
 
-		if (bind(mSocket, (sockaddr *)&addr, sizeof(addr)) == SOCKET_ERROR) // If there was a failure binding, error
+		if (bind(mSocket, (sockaddr *)&addr, sizeof(addr)) == SOCKET_ERROR)
 		{
-			Error("Bind failed");
+			Error("Bind failed", CSERROR);
 		}
 	}
 
@@ -190,9 +191,9 @@ namespace CrossSocket
 	 */
 	void Socket::Listen(int backlog)
 	{
-		if (listen(mSocket, backlog) == SOCKET_ERROR) // If there was a failure listening, error
+		if (listen(mSocket, backlog) == SOCKET_ERROR)
 		{
-			Error("Listen failed");
+			Error("Listen failed", CSERROR);
 		}
 	}
 
@@ -203,13 +204,13 @@ namespace CrossSocket
 	 */
 	Socket Socket::AcceptConnection()
 	{
-		socket_t client = accept(mSocket, nullptr, nullptr); // Attempt to accept a socket from any address
-		if (client == INVALID_SOCKET)						 // If there is an error while accepting...
+		socket_t client = accept(mSocket, nullptr, nullptr);
+		if (client == INVALID_SOCKET)
 		{
-			int error = errno;
-			if (error != EWOULDBLOCK) // ...and the error code is not ignorable, error
+			int error = CSERROR;
+			if (error != CSEWOULDBLOCK)
 			{
-				Error("Accept failed");
+				Error("Accept failed", error);
 			}
 		}
 		return Socket(client);
@@ -273,12 +274,12 @@ namespace CrossSocket
 	void Socket::Send(const char *buf, int len, int flags)
 	{
 		int total_sent = 0;
-		while (total_sent < len) // TCP doesn't always send all the data at once, so continue trying to send data until it is all sent
+		while (total_sent < len)
 		{
 			int sent = send(mSocket, buf + total_sent, len - total_sent, flags);
 			if (sent == SOCKET_ERROR)
 			{
-				Error("Send failed with error " + std::to_string(errno));
+				Error("Send failed with error", CSERROR);
 			}
 			total_sent += sent;
 		}
@@ -297,7 +298,7 @@ namespace CrossSocket
 	{
 		if (sendto(mSocket, buf, len, flags, to, tolen) == SOCKET_ERROR)
 		{
-			Error("SendTo failed with error " + std::to_string(errno));
+			Error("SendTo failed with error", CSERROR);
 		}
 	}
 
@@ -312,29 +313,28 @@ namespace CrossSocket
 	int Socket::Receive(char *buf, int len, int flags)
 	{
 		int bytesReceived = 0;
-		while (bytesReceived < len) // TCP doesn't always receive all the data at once, so continue trying to receive data until it all arrives
+		while (bytesReceived < len)
 		{
 			int received = recv(mSocket, buf + bytesReceived, len - bytesReceived, flags);
-			if (received == 0) // If nothing is received, but there is no error
+			if (received == 0)
 			{
-				// Connection closed
 				return bytesReceived;
 			}
-			else if (received == SOCKET_ERROR) // If there is an error while receiving...
+			else if (received == SOCKET_ERROR)
 			{
-				int error = errno;
-				if (error != EWOULDBLOCK && error != EINPROGRESS && error != EALREADY) // ...and the error cannot be ignored
+				int error = CSERROR;
+				if (error != CSEWOULDBLOCK && error != CSEINPROGRESS && error != CSEALREADY)
 				{
-					if (error == ECONNRESET) // This error usually doesn't result in a problem, but there will not be any more data, so stop receiving
+					if (error == CSECONNRESET)
 					{
 						std::cerr << "Connection reset" << std::endl;
 					}
-					else // Otherwise, error
+					else
 					{
-						Error("Recv failed with error " + std::to_string(error));
+						Error("Recv failed with error", error);
 					}
 				}
-				return bytesReceived; // Stop receiving data regardless of the error
+				return bytesReceived;
 			}
 			bytesReceived += received;
 		}
@@ -356,7 +356,7 @@ namespace CrossSocket
 		int bytesReceived = recvfrom(mSocket, buf, len, flags, from, fromlen);
 		if (bytesReceived == SOCKET_ERROR)
 		{
-			Error("RecvFrom failed with error " + std::to_string(errno));
+			Error("RecvFrom failed with error", CSERROR);
 		}
 		return bytesReceived;
 	}

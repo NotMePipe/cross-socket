@@ -1,5 +1,7 @@
 #include "CrossSocket/SocketManager.h"
 
+#include <stdexcept>
+
 namespace CrossSocket
 {
     SocketManager *SocketManager::sInstance = nullptr;
@@ -64,22 +66,20 @@ namespace CrossSocket
         FD_ZERO(&writeSet);
         socket_t maxFd = 0;
 
-        for (WatchedSocket &ws : sockets) // Calculates the maxFd value
+        for (WatchedSocket &ws : sockets)
         {
             socket_t s = ws.socket->GetRawSocket();
-            if (ws.monitorRead) // If we are monitoring the read states of the socket...
+            if (ws.monitorRead)
             {
-                FD_SET(s, &readSet); //...add that Socket to the set of read-monitored sockets
+                FD_SET(s, &readSet);
             }
-            if (ws.monitorWrite) // If we are monitoring the write states of the socket...
+            if (ws.monitorWrite)
             {
-                FD_SET(s, &writeSet); //...add that Socket to the set of write-monitored sockets
+                FD_SET(s, &writeSet);
             }
-            // If the current socket is greater than the highest file descriptor
-            // NOTE: This is only allowed because both Winsock and Unix handle sockets as integers (Unix: int, Winsock: unsigned long long)
             if (s > maxFd)
             {
-                maxFd = s; // Set the highest file descriptor to equal the socket. This value is increased by 1 and passed into the select() function's nfds parameter (ignored by Winsock, used on Unix)
+                maxFd = s;
             }
         }
 
@@ -90,19 +90,19 @@ namespace CrossSocket
         int result = select(static_cast<int>(maxFd + 1), &readSet, &writeSet, nullptr, &timeout);
         if (result == SOCKET_ERROR)
         {
-            throw std::runtime_error("select() failed in event loop" + std::to_string(errno));
+            throw std::runtime_error("select() failed in event loop" + std::to_string(CSERROR));
         }
 
         for (WatchedSocket &ws : sockets) // Handle event callbacks
         {
             socket_t s = ws.socket->GetRawSocket();
-            if (ws.monitorRead && FD_ISSET(s, &readSet) && ws.onRead) // If (monitoring the Socket read events) AND (the socket is in the fd_set) AND (the onRead callback exists)
+            if (ws.monitorRead && FD_ISSET(s, &readSet) && ws.onRead)
             {
                 ws.onRead(*ws.socket); // Run the onRead callback
             }
-            if (ws.monitorWrite && FD_ISSET(s, &writeSet) && ws.onWrite) // If (monitoring the Socket write events) AND (the socket is in the fd_set) AND (the onWrite callback exists)
+            if (ws.monitorWrite && FD_ISSET(s, &writeSet) && ws.onWrite)
             {
-                ws.onWrite(*ws.socket); // Run the onWrite callback
+                ws.onWrite(*ws.socket);
             }
         }
     }
@@ -138,7 +138,7 @@ namespace CrossSocket
     void SocketManager::CloseSocket(int id)
     {
         sockets[id].socket->Close();
-        for (int i = id; i < sockets.size(); ++i) // Decrease the ID by one for each Socket with a greater ID than the removed one
+        for (int i = id; i < sockets.size(); ++i)
         {
             --sockets[i].id;
         }

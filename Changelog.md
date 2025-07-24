@@ -74,3 +74,23 @@
 - `ECONNREFUSED` macro is not recommended to be used. It is currently implemented in `ConnectTo()` in `Socket.h` as a temporary method of allowing CrossSocket to retry when connections fail rather than crashing. It isn't dangerous to use, but it is an error that shouldn't always be ignored like it currently is (1.1W1)
 <a id="1.1W2"></a>
 - Even though `CrossSocketUtils.h` has the platform-neutral functions hidden to only CrossSocket, the library still will give files including it access to socket functions through the Berkeley Socket API or WinSock. As a result of this, it is possible to make calls directly using the socket accessed by `GetRawSocket()`. This is not an intended function of CrossSocket, and is not recommended. If a socket is closed in that manner, CrossSocket could begin to error or have undefined behavior (1.1W2)
+
+## Version 1.2
+- Include improvements
+- Bug fixes
+- [(1.0W2)](#1.0W2) has been resolved.
+- [(1.0W4)](#1.0W4) has been resolved.
+- [(1.0W7)](#1.0W7) has been resolved.
+### CrossSocketUtils.h
+- Terrible macro redefinitions have been removed
+- Wrappers for `ntohl()` and `htonl()` have been added
+- All error codes now have the `CSE` prefix
+### Socket.h
+- `Error()` now requires an error code to be passed
+### *Warnings*
+<a id="1.2W1"></a>
+- [(1.1W1) Extended](#1.1W1): `CSECONNREFUSED` has been determined to be safe, but it is still used in an inconvenient way in `Socket::ConnectTo()`. This is intended to be removed in the next version (1.2W1)
+<a id="1.2W2"></a>
+- `Socket::Error()` shuts down CrossSocket whenever it is called. While this isn't a bug, it is not an intended behavior and will be removed in the next version (1.2W2)
+<a id="1.2W3"></a>
+- CrossSocket will be converting to implement RAII very soon. Functions which do not match that implementation may be removed without notice (1.2W3)

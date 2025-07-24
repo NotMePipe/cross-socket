@@ -1,31 +1,22 @@
 #ifndef __CROSS_SOCKET_UTILS_H
 #define __CROSS_SOCKET_UTILS_H
 
-#include <stdexcept>
-#ifdef _WIN32 // If using Windows, include Winsock headers
+#include <cstdint>
+
+#ifdef _WIN32
 #include <WinSock2.h>
 #include <ws2tcpip.h>
 
-#pragma comment(lib, "Ws2_32.lib") // Link Winsock to the compiler
-
 using socket_t = SOCKET;
 
-// Remove Windows errno.h definitions for error codes present in Unix errno.h and reassigned them to Winsock error codes
-#undef EWOULDBLOCK
-#define EWOULDBLOCK WSAEWOULDBLOCK // Fires when nonblocking mode is on and an operation cannot be completed immediately
-#undef EINPROGRESS
-#define EINPROGRESS WSAEINPROGRESS // Fires when a blocking operation is in progress because only one blocking operation can run per task/thread
-#undef EALREADY
-#define EALREADY WSAEALREADY // Fires when a nonblocking socket calls an operation while running another operation
-#undef ECONNRESET
-#define ECONNRESET WSAECONNRESET // Fires when the Server Socket forcibly closes the connection
-#undef ECONNREFUSED
-#define ECONNREFUSED WSAECONNREFUSED // Fires when the target computer actively refuses it. This usually happens when attempting to connect to a target with no Server Socket
+#define CSEWOULDBLOCK WSAEWOULDBLOCK   // Fires when nonblocking mode is on and an operation cannot be completed immediately
+#define CSEINPROGRESS WSAEINPROGRESS   // Fires when a blocking operation is in progress because only one blocking operation can run per task/thread
+#define CSEALREADY WSAEALREADY		   // Fires when a nonblocking socket calls an operation while running another operation
+#define CSECONNRESET WSAECONNRESET	   // Fires when the Server Socket forcibly closes the connection
+#define CSECONNREFUSED WSAECONNREFUSED // Fires when the target computer actively refuses it. This usually happens when attempting to connect to a target with no Server Socket
 
-// Redefine errno as WSAGetLastError()
-#undef errno
-#define errno WSAGetLastError()
-#else // If using a Unix system, include <sys/socket.h> and similar headers (because this is the C standard, Winsock macros have been renamed to match the defaults here)
+#define CSERROR WSAGetLastError()
+#else
 // Some of these includes may be somewhat redundant and/or unused
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -34,13 +25,19 @@ using socket_t = SOCKET;
 #include <unistd.h>
 #include <netdb.h>
 
-using socket_t = int; // socket_t type definition required for platform-neutrality
+using socket_t = int;
 
-// Define INVALID_SOCKET and SOCKET_ERROR to match the Winsock definitions
-// Unix returns -1 in the same cases where Winsock returns these macros (assigned to ~0 and -1 respectively), so defining these macros to equal -1 is the cleaner and easier route
 #define INVALID_SOCKET (-1)
 #define SOCKET_ERROR (-1)
-#endif
+
+#define CSEWOULDBLOCK EWOULDBLOCK	// Fires when nonblocking mode is on and an operation cannot be completed immediately
+#define CSEINPROGRESS EINPROGRESS	// Fires when a blocking operation is in progress because only one blocking operation can run per task/thread
+#define CSEALREADY EALREADY			// Fires when a nonblocking socket calls an operation while running another operation
+#define CSECONNRESET ECONNRESET		// Fires when the Server Socket forcibly closes the connection
+#define CSECONNREFUSED ECONNREFUSED // Fires when the target computer actively refuses it. This usually happens when attempting to connect to a target with no Server Socket
+
+#define CSERROR errno
+#endif // _WIN32
 
 namespace CrossSocket
 {
@@ -75,9 +72,26 @@ namespace CrossSocket
 #endif
 		}
 
+	public:
+		/**
+		 * @brief Convert to network byte order (to big-endian)
+		 *
+		 * @param val Value to convert
+		 * @return Input value in big-endian
+		 */
+		static uint32_t cs_htonl(uint32_t val);
+
+		/**
+		 * @brief Convert from network byte order (to little-endian)
+		 *
+		 * @param val Value to convert
+		 * @return Input value in little-endian
+		 */
+		static uint32_t cs_ntohl(uint32_t val);
+
 		friend class Socket;
 		friend class SocketManager;
 	};
 }
 
-#endif
+#endif // __CROSS_SOCKET_UTILS_H

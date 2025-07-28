@@ -1,5 +1,6 @@
 #include "CrossSocket/SocketManager.h"
 
+#include <string>
 #include <stdexcept>
 
 namespace CrossSocket

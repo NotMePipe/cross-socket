@@ -76,8 +76,9 @@
 - Even though `CrossSocketUtils.h` has the platform-neutral functions hidden to only CrossSocket, the library still will give files including it access to socket functions through the Berkeley Socket API or WinSock. As a result of this, it is possible to make calls directly using the socket accessed by `GetRawSocket()`. This is not an intended function of CrossSocket, and is not recommended. If a socket is closed in that manner, CrossSocket could begin to error or have undefined behavior (1.1W2)
 
 ## Version 1.2
-- Include improvements
+- #include improvements
 - Bug fixes
+- Error messages return error numbers every time
 - [(1.0W2)](#1.0W2) has been resolved.
 - [(1.0W4)](#1.0W4) has been resolved.
 - [(1.0W7)](#1.0W7) has been resolved.
